@@ -28,7 +28,7 @@ MODULE_VERSION("0.1");
  * registration any more, because ioctls need to know
  * it.
  */
-#define MAJOR_NUM 100
+#define MAJOR_NUMBER 100
 
 /*
  * Set the message of the device driver
@@ -122,30 +122,30 @@ static int __init encoder_gpio_init(void){
   image_arr_ptr = NULL;
 
 	// Register
-	major_number = register_chrdev(0,DEVICE_NAME,&fops);
+	major_number = register_chrdev(MAJOR_NUMBER,DEVICE_NAME,&fops);
 	if (major_number < 0)
 	{
 	  printk(KERN_ALERT "encoder driver: failed to register a major number \n");
 	  return major_number;
 	}
-	printk(KERN_INFO "encoder driver: registered correctly with major number %d\n",major_number);
+	printk(KERN_INFO "encoder driver: registered correctly with major number %d\n",MAJOR_NUMBER);
 
 	// Create class
 	encoder_driver_class = class_create(THIS_MODULE, CLASS_NAME);
 	if (IS_ERR(encoder_driver_class))
 	{
-		unregister_chrdev(major_number,DEVICE_NAME);
+		unregister_chrdev(MAJOR_NUMBER,DEVICE_NAME);
 		printk(KERN_ALERT "Did not register device class \n");
 		return PTR_ERR(encoder_driver_class);
 	}
 	printk(KERN_INFO "encoder driver: device class registered correctly \n");
 
 	// Create device
-	encoder_driver_device = device_create(encoder_driver_class,NULL,MKDEV(major_number,0),NULL,DEVICE_NAME);
+	encoder_driver_device = device_create(encoder_driver_class,NULL,MKDEV(MAJOR_NUMBER,0),NULL,DEVICE_NAME);
 	if(IS_ERR(encoder_driver_device))
 	{
 		class_destroy(encoder_driver_class);
-		unregister_chrdev(major_number,DEVICE_NAME);
+		unregister_chrdev(MAJOR_NUMBER,DEVICE_NAME);
 		printk(KERN_ALERT "Did not register device (not class), error:%ld \n",PTR_ERR(encoder_driver_device));
 		return PTR_ERR(encoder_driver_device);
 	}
@@ -204,9 +204,9 @@ static int __init encoder_gpio_init(void){
  */
 static void __exit encoder_gpio_exit(void){
 
-    device_destroy(encoder_driver_class,MKDEV(major_number,0));
+    device_destroy(encoder_driver_class,MKDEV(MAJOR_NUMBER,0));
     class_destroy(encoder_driver_class);
-	unregister_chrdev(major_number,DEVICE_NAME);
+	unregister_chrdev(MAJOR_NUMBER,DEVICE_NAME);
 
     //unexport all the GPIOs
     gpio_unexport(MOTOR_ENCODER_A_GPIO);
