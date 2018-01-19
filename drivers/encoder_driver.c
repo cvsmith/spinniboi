@@ -21,6 +21,20 @@ MODULE_VERSION("0.1");
 
 #define TICKS_PER_REV 464
 
+#include <linux/ioctl.h>
+
+/*
+ * The major device number. We can't rely on dynamic
+ * registration any more, because ioctls need to know
+ * it.
+ */
+#define MAJOR_NUM 100
+
+/*
+ * Set the message of the device driver
+ */
+#define IOCTL_SET_MSG _IOR(MAJOR_NUM, 0, char *)
+
 static volatile unsigned int tick_count = 0;
 
 extern void spi_master_init(uint32_t clk);
@@ -42,6 +56,8 @@ bool read_already = false;
 
 uint32_t white_leds[144];
 uint32_t black_leds[144];
+
+uint32_t* image_arr_ptr;
 
 /** @brief major number to identify device */
 static int major_number;
@@ -70,6 +86,7 @@ static int encoder_driver_open(struct inode *inodep, struct file *filep);
 static int encoder_driver_release(struct inode *inodep, struct file *filep);
 static ssize_t encoder_driver_read(struct file *filep, char *buffer, size_t len,loff_t *offset);
 static ssize_t encoder_driver_write(struct file *filep, const char *buffer,size_t len, loff_t *offset);
+long device_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param);
 
 
 /** @brief global file_operations struct to create character device driver */
@@ -77,6 +94,7 @@ static struct file_operations fops =
 {
 	.open = encoder_driver_open,
 	.read = encoder_driver_read,
+  .unlocked_ioctl = device_ioctl,
 	.write = encoder_driver_write,
 	.release = encoder_driver_release,
 };
@@ -100,6 +118,8 @@ static int __init encoder_gpio_init(void){
   int i;
   result = 0;
 	printk(KERN_INFO "encoder driver: hello world!\n");
+
+  image_arr_ptr = NULL;
 
 	// Register
 	major_number = register_chrdev(0,DEVICE_NAME,&fops);
@@ -338,6 +358,19 @@ static irq_handler_t encoder_irq_handler(unsigned int irq, void *dev_id,
     }
 
     return (irq_handler_t) IRQ_HANDLED;
+}
+
+long device_ioctl(
+         struct file *file, /* ditto */
+         unsigned int ioctl_num,    /* number and param for ioctl */
+         unsigned long ioctl_param)
+{
+    printk(KERN_INFO "inside device_ioctl, param is %x\n, num is %d, ref is %d",
+        (unsigned int)ioctl_param, ioctl_num, IOCTL_SET_MSG);
+
+    image_arr_ptr = (uint32_t*)ioctl_param;
+
+    return SUCCESS;
 }
 
 /// This next calls are  mandatory -- they identify the initialization
