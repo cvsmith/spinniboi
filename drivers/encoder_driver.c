@@ -13,7 +13,7 @@ MODULE_AUTHOR("Karthic Palaniappan");
 MODULE_DESCRIPTION("Encoder Driver with Interrupts");
 MODULE_VERSION("0.1");
 
-#define MOTOR_ENCODER_A_GPIO 6
+#define MOTOR_ENCODER_A_GPIO 20 // "and this is gonna fucking work" - perley, 4:26am
 #define MOTOR_ENCODER_B_GPIO 13
 
 #define DEVICE_NAME "encoder"
@@ -365,12 +365,12 @@ long device_ioctl(
          unsigned int ioctl_num,    /* number and param for ioctl */
          unsigned long ioctl_param)
 {
-    printk(KERN_INFO "inside device_ioctl, param is %x\n, num is %d, ref is %d",
-        (unsigned int)ioctl_param, ioctl_num, IOCTL_SET_MSG);
+    printk(KERN_INFO "inside device_ioctl, param is %x\n, num is %d",
+        (unsigned int)ioctl_param, ioctl_num);
 
     image_arr_ptr = (uint32_t*)ioctl_param;
 
-    return SUCCESS;
+    return 0;
 }
 
 /// This next calls are  mandatory -- they identify the initialization
