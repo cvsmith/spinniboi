@@ -337,12 +337,19 @@ static irq_handler_t encoder_irq_handler(unsigned int irq, void *dev_id,
     enc = &motor_encoder;
 
     tick_count++;
+    if (tick_count >= TICKS_PER_REV) {
+      tick_count = 0;
+    }
+    set_strip(144, 0x8, image_array_ptr+(tick_count/144));
+
+    /* pinwheel test pattern
     if ((tick_count % 10) < 5){
       set_strip(144, 0x8, white_leds);
       printk(KERN_INFO "White!\n");
     } else {
       set_strip(144, 0x8, black_leds);
     }
+    */
 
     if(irq == irq_motor_enc_A)
     {
