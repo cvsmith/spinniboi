@@ -19,6 +19,10 @@ MODULE_VERSION("0.1");
 #define DEVICE_NAME "encoder"
 #define CLASS_NAME "ENCODER"
 
+#define TICKS_PER_REV 464
+
+static volatile int tick_count = 0;
+
 typedef struct
 {
     unsigned int encoder_A_gpio;
@@ -272,6 +276,11 @@ static irq_handler_t encoder_irq_handler(unsigned int irq, void *dev_id,
 {
     encoder_t *enc = NULL;
     enc = &motor_encoder;
+
+    tick_count++;
+    if (tick_count >= TICKS_PER_REV) {
+      printk(KERN_INFO "REV\n");
+    }
 
     if(irq == irq_motor_enc_A)
     {
