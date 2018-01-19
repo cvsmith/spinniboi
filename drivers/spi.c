@@ -215,11 +215,11 @@ inline void spi_finish(void) {
 }
 
 void set_strip(uint32_t len, uint8_t brightness, uint32_t *leds) {
-    printk(KERN_INFO "SPI set strip called\n");
+    //printk(KERN_INFO "SPI set strip called\n");
     spi_start();
 
     // Start frame 0 * 32
-    printk(KERN_INFO "SPI sending header\n");
+    //printk(KERN_INFO "SPI sending header\n");
     spi_send_byte(0);
     spi_send_byte(0);
     spi_send_byte(0);
@@ -236,13 +236,13 @@ void set_strip(uint32_t len, uint8_t brightness, uint32_t *leds) {
     }
 
     // End frame 1 * 32
-    printk(KERN_INFO "SPI sending footer\n");
+    //printk(KERN_INFO "SPI sending footer\n");
     spi_send_byte(0xFF);
     spi_send_byte(0xFF);
     spi_send_byte(0xFF);
     spi_send_byte(0xFF);
 
-    printk(KERN_INFO "SPI finishing\n");
+    //printk(KERN_INFO "SPI finishing\n");
     spi_finish();
-    printk(KERN_INFO "SPI done\n");
+    //printk(KERN_INFO "SPI done\n");
 }

@@ -21,12 +21,13 @@ MODULE_VERSION("0.1");
 
 #define TICKS_PER_REV 464
 
-static volatile int tick_count = 0;
+static volatile unsigned int tick_count = 0;
 
 extern void spi_master_init(uint32_t clk);
 extern void spi_master_deinit(void);
 extern void set_strip(uint32_t len, uint8_t brightness, uint32_t *leds);
 #define CDIV_488K 512
+#define CDIV_7M8  32
 
 typedef struct
 {
@@ -38,6 +39,9 @@ typedef struct
 } encoder_t;
 
 bool read_already = false;
+
+uint32_t white_leds[144];
+uint32_t black_leds[144];
 
 /** @brief major number to identify device */
 static int major_number;
@@ -93,6 +97,7 @@ static irq_handler_t  encoder_irq_handler(unsigned int irq, void *dev_id,
  */
 static int __init encoder_gpio_init(void){
   int result;
+  int i;
   result = 0;
 	printk(KERN_INFO "encoder driver: hello world!\n");
 
@@ -161,7 +166,12 @@ static int __init encoder_gpio_init(void){
                          IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
                          "motor_encoder_B_gpio_handler",
                          NULL);
-    spi_master_init(CDIV_488K);
+    spi_master_init(CDIV_7M8);
+
+    memset(black_leds, 0, 144*4);
+    for (i = 0; i < 144; i++) {
+      white_leds[i] = 0xFFFFFF;
+    }
 
     return result;
 }
@@ -218,7 +228,7 @@ static ssize_t encoder_driver_read(struct file *filep, char *buffer, size_t len,
 	return 0;
     }
 
-    size_of_message = snprintf(message_buf, 32, "%ld\n", motor_encoder.encoder_pos);
+    size_of_message = snprintf(message_buf, 32, "%ud\n", tick_count);
 
 	// copy_to_user has the format ( * to, *from, size) and returns 0 on success
     //plus one because snprintf doesn't account for the NULL pointer
@@ -307,7 +317,11 @@ static irq_handler_t encoder_irq_handler(unsigned int irq, void *dev_id,
 
     tick_count++;
     if (tick_count >= TICKS_PER_REV) {
-      printk(KERN_INFO "REV\n");
+      tick_count = 0;
+      set_strip(144, 0x10, white_leds);
+      printk(KERN_INFO "White!\n");
+    } else {
+      set_strip(144, 0x10, black_leds);
     }
 
     if(irq == irq_motor_enc_A)
