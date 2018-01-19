@@ -225,10 +225,10 @@ void set_strip(uint32_t len, uint8_t brightness, uint32_t *leds) {
     spi_send_byte(0);
     spi_send_byte(0);
 
-    printk(KERN_INFO "SPI sending LEDs\n");
+    //printk(KERN_INFO "SPI sending LEDs\n");
     for (; len > 0; len--, leds++) {
 	int i;
-        uint32_t data = *leds | ((uint32_t)0x7 << 29) | ((uint32_t)brightness << 24);
+        uint32_t data = (*leds & 0xFFFFFF) | ((uint32_t)0x7 << 29) | ((uint32_t)brightness << 24);
 	for (i = 3; i >= 0; i--) {
       //printk(KERN_INFO "SPI sending byte %d led %u\n", i, len);
 	    spi_send_byte((uint8_t)(data >> (i*8)));

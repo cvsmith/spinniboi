@@ -58,7 +58,8 @@ bool read_already = false;
 uint32_t white_leds[144];
 uint32_t black_leds[144];
 
-uint32_t* image_arr_ptr;
+uint32_t image_arr[144*265];
+uint32_t arr_offset;
 
 /** @brief major number to identify device */
 static int major_number;
@@ -119,8 +120,6 @@ static int __init encoder_gpio_init(void){
   int i;
   result = 0;
 	printk(KERN_INFO "encoder driver: hello world!\n");
-
-  image_arr_ptr = NULL;
 
 	// Register
 	major_number = register_chrdev(MAJOR_NUMBER,DEVICE_NAME,&fops);
@@ -193,6 +192,8 @@ static int __init encoder_gpio_init(void){
     for (i = 0; i < 144; i++) {
         white_leds[i] = 0xFFFFFF;
     }
+
+    arr_offset = 0;
 
     return result;
 }
@@ -269,49 +270,20 @@ static ssize_t encoder_driver_read(struct file *filep, char *buffer, size_t len,
 
 }
 
-static uint32_t leds[144];
-static int num = 1;
-
 static ssize_t encoder_driver_write(struct file *filep, const char *buffer,
 								size_t len,loff_t *offset)
 {
-	//copy the message the user typed
-  uint32_t val;
-    int encoder_choice;
-    int i;
-	unsigned copy_len = (len > 31) ? 31 : len;
-
-	int ret = copy_from_user(message_buf,buffer,copy_len);
+	int ret = copy_from_user((char*)image_arr+arr_offset,buffer,len);
 	if(ret != 0)
 	{
 		printk(KERN_ALERT "encoder driver: Could not copy %d characters \n", ret);
-		return (copy_len - ret);
+		return (len - ret);
 	}
 
-
-  val = 0;
-  for (i = 0; i < 144; i++) {
-    val >>= 8;
-    if (val == 0) val = 0xFF0000;
-    if (i < num) {
-	    leds[i] = val;
-    } else {
-	    leds[i] = 0;
-    }
-    if (num == 144) num = 1;
-  }
-  num++;
-
-  set_strip(144, 0x8, leds);
-
 	printk(KERN_INFO "encoder driver: Received %d characters from the user \n",len);
-	//null terminate string, since we are going to use sscanf
-	size_of_message = len;
-	message_buf[len] = '\0';
+	arr_offset += len;
 
-	sscanf(message_buf, "%d\n", &encoder_choice);
-
-	return copy_len;
+	return len;
 }
 
 /** @brief The GPIO IRQ Handler function
@@ -340,7 +312,7 @@ static irq_handler_t encoder_irq_handler(unsigned int irq, void *dev_id,
     if (tick_count >= TICKS_PER_REV) {
       tick_count = 0;
     }
-    set_strip(144, 0x8, image_array_ptr+(tick_count/144));
+    set_strip(144, 0x10, image_arr+(tick_count*144));
 
     /* pinwheel test pattern
     if ((tick_count % 10) < 5){
@@ -375,7 +347,6 @@ long device_ioctl(
     printk(KERN_INFO "inside device_ioctl, param is %x\n, num is %d",
         (unsigned int)ioctl_param, ioctl_num);
 
-    image_arr_ptr = (uint32_t*)ioctl_param;
 
     return 0;
 }
