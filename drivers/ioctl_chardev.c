@@ -167,13 +167,15 @@ long device_ioctl(
     char *temp;
     char ch;
 
-    printk(KERN_INFO "inside device_ioctl, param is %x\n", (unsigned int)ioctl_param);
+    printk(KERN_INFO "inside device_ioctl, param is %x\n, num is %d, ref is %d",
+        (unsigned int)ioctl_param, ioctl_num, IOCTL_SET_MSG);
 
     /*
      * Switch according to the ioctl called
      */
     switch (ioctl_num) {
     case IOCTL_SET_MSG:
+
         /*
          * Receive a pointer to a message (in user space) and set that
          * to be the device's message.  Get the parameter given to
@@ -264,6 +266,7 @@ int init_module()
     printk(KERN_INFO "The device file name is important, because\n");
     printk(KERN_INFO "the ioctl program assumes that's the\n");
     printk(KERN_INFO "file you'll use.\n");
+    printk(KERN_INFO "ref desired num is %d\n", IOCTL_SET_MSG);
 
     return 0;
 }

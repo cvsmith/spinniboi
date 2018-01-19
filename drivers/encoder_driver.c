@@ -157,7 +157,7 @@ static int __init encoder_gpio_init(void){
     // This next call requests an interrupt line
     result = request_irq(irq_motor_enc_A,
                          (irq_handler_t) encoder_irq_handler,
-                         IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
+                         IRQF_TRIGGER_RISING,
                          "motor_encoder_A_gpio_handler",
                          NULL);
 
@@ -228,7 +228,7 @@ static ssize_t encoder_driver_read(struct file *filep, char *buffer, size_t len,
 	return 0;
     }
 
-    size_of_message = snprintf(message_buf, 32, "%ud\n", tick_count);
+    size_of_message = snprintf(message_buf, 32, "%u\n", tick_count);
 
 	// copy_to_user has the format ( * to, *from, size) and returns 0 on success
     //plus one because snprintf doesn't account for the NULL pointer
