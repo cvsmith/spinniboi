@@ -93,9 +93,9 @@ main()
         exit(-1);
     }
 
-    ioctl_get_nth_byte(file_desc);
-    ioctl_get_msg(file_desc);
     ioctl_set_msg(file_desc, msg);
+    ioctl_get_msg(file_desc);
+    ioctl_get_nth_byte(file_desc);
 
     close(file_desc);
 }

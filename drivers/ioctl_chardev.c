@@ -167,6 +167,8 @@ long device_ioctl(
     char *temp;
     char ch;
 
+    printk(KERN_INFO "inside device_ioctl, param is %x\n", (unsigned int)ioctl_param);
+
     /*
      * Switch according to the ioctl called
      */
@@ -178,6 +180,7 @@ long device_ioctl(
          * ioctl by the process.
          */
         temp = (char *)ioctl_param;
+        printk(KERN_INFO "ioctl message is %s\n", (char*)ioctl_param);
 
         /*
          * Find the length of the message

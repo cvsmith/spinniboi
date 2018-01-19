@@ -23,6 +23,11 @@ MODULE_VERSION("0.1");
 
 static volatile int tick_count = 0;
 
+extern void spi_master_init(uint32_t clk);
+extern void spi_master_deinit(void);
+extern void set_strip(uint32_t len, uint8_t brightness, uint32_t *leds);
+#define CDIV_488K 512
+
 typedef struct
 {
     unsigned int encoder_A_gpio;
@@ -156,6 +161,7 @@ static int __init encoder_gpio_init(void){
                          IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
                          "motor_encoder_B_gpio_handler",
                          NULL);
+    spi_master_init(CDIV_488K);
 
     return result;
 }
@@ -183,6 +189,7 @@ static void __exit encoder_gpio_exit(void){
     gpio_free(MOTOR_ENCODER_A_GPIO);
     gpio_free(MOTOR_ENCODER_B_GPIO);
 
+    spi_master_deinit();
     gpio_lib_deinit();
     printk(KERN_INFO "ENCODER_DRIVER: Goodbye from the LKM!\n");
 }
@@ -231,11 +238,16 @@ static ssize_t encoder_driver_read(struct file *filep, char *buffer, size_t len,
 
 }
 
+static uint32_t leds[144];
+static int num = 1;
+
 static ssize_t encoder_driver_write(struct file *filep, const char *buffer,
 								size_t len,loff_t *offset)
 {
 	//copy the message the user typed
+  uint32_t val;
     int encoder_choice;
+    int i;
 	unsigned copy_len = (len > 31) ? 31 : len;
 
 	int ret = copy_from_user(message_buf,buffer,copy_len);
@@ -244,6 +256,22 @@ static ssize_t encoder_driver_write(struct file *filep, const char *buffer,
 		printk(KERN_ALERT "encoder driver: Could not copy %d characters \n", ret);
 		return (copy_len - ret);
 	}
+
+
+  val = 0;
+  for (i = 0; i < 144; i++) {
+    val >>= 8;
+    if (val == 0) val = 0xFF0000;
+    if (i < num) {
+	    leds[i] = val;
+    } else {
+	    leds[i] = 0;
+    }
+    if (num == 144) num = 1;
+  }
+  num++;
+
+  set_strip(144, 0x10, leds);
 
 	printk(KERN_INFO "encoder driver: Received %d characters from the user \n",len);
 	//null terminate string, since we are going to use sscanf
