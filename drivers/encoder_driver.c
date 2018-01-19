@@ -19,7 +19,7 @@ MODULE_VERSION("0.1");
 #define DEVICE_NAME "encoder"
 #define CLASS_NAME "ENCODER"
 
-#define TICKS_PER_REV 464
+#define TICKS_PER_REV 265
 
 #include <linux/ioctl.h>
 
@@ -42,6 +42,7 @@ extern void spi_master_deinit(void);
 extern void set_strip(uint32_t len, uint8_t brightness, uint32_t *leds);
 #define CDIV_488K 512
 #define CDIV_7M8  32
+#define CDIV_1953K 128
 
 typedef struct
 {
@@ -190,7 +191,7 @@ static int __init encoder_gpio_init(void){
 
     memset(black_leds, 0, 144*4);
     for (i = 0; i < 144; i++) {
-      white_leds[i] = 0xFFFFFF;
+        white_leds[i] = 0xFFFFFF;
     }
 
     return result;
@@ -301,7 +302,7 @@ static ssize_t encoder_driver_write(struct file *filep, const char *buffer,
   }
   num++;
 
-  set_strip(144, 0x10, leds);
+  set_strip(144, 0x8, leds);
 
 	printk(KERN_INFO "encoder driver: Received %d characters from the user \n",len);
 	//null terminate string, since we are going to use sscanf
@@ -336,12 +337,11 @@ static irq_handler_t encoder_irq_handler(unsigned int irq, void *dev_id,
     enc = &motor_encoder;
 
     tick_count++;
-    if (tick_count >= TICKS_PER_REV) {
-      tick_count = 0;
-      set_strip(144, 0x10, white_leds);
+    if ((tick_count % 10) < 5){
+      set_strip(144, 0x8, white_leds);
       printk(KERN_INFO "White!\n");
     } else {
-      set_strip(144, 0x10, black_leds);
+      set_strip(144, 0x8, black_leds);
     }
 
     if(irq == irq_motor_enc_A)
